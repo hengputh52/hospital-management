@@ -21,15 +21,19 @@ struct Patient {
 // Define the PatientList class
 class PatientList {
 private:
-    int size;
-    Patient *rear, *front;
+    int Red_Size, Yellow_Size, Green_Size;
+    Patient *Red_Front, *Red_Rear;
+    Patient *Yellow_Front, *Yellow_Rear;
+    Patient *Green_Front, *Green_Rear;
 
 public:
     // Constructor
     PatientList() {
-        size = 0;
-        rear = nullptr;
-        front = nullptr;
+        Red_Size = Yellow_Size = Green_Size = 0;
+        Red_Front = Red_Rear = NULL;
+        Yellow_Front = Yellow_Rear =NULL;
+        Green_Front = Green_Rear = NULL;
+        
     }
 
     // Add a new patient (enqueue)
@@ -76,15 +80,10 @@ public:
         cout << "Enter the Name of Your Consultant Doctor: ";
         getline(cin, newPatient->Consultant);
 
-        // Enqueue the patient
-        if (Empty()) {
-            front = rear = newPatient;
-        } else {
-            rear->Next = newPatient;
-            rear = newPatient;
-        }
+        
+       
 
-        size++;
+    
         cout << "Patient added successfully!\n";
     }
 
@@ -92,6 +91,10 @@ public:
     void PatientOperation()
     {
         //red has to display first then yellow and green 
+
+
+        cout<<"-----------------Patient Operation------------------\n";
+
     }
 
     // Display all patients
@@ -121,6 +124,24 @@ public:
         }
     }
 
+    //add patient in queue
+    void Enqueue(Patient *&front, Patient *&rear, Patient *newPatient)
+    {
+        if(IsEmpty(front))
+        {
+            front = rear = newPatient;
+        }
+        else
+        {
+            rear->Next = newPatient;
+            rear = newPatient;
+        }
+
+    }
+
+
+    //opearting the patient by remove first element in queue
+    void Dequeue()
     // Check for duplicate patient ID
     bool CheckDuplicateID(int id) {
         Patient *current = front;
@@ -134,9 +155,10 @@ public:
     }
 
     // Check if the patient list is empty
-    bool Empty() {
-        return size == 0;
-    }
+   bool IsEmpty(Patient *front)
+   {
+        return front= NULL;
+   }
 };
 
 // Main function
@@ -145,31 +167,31 @@ int main() {
 
     int option;
     do{
-        cout<<"\t\t\t\t\t\t---------------------Welcome to our Sabay Hospital------------------ "<<endl;
-        cout<<"\t\t\t\t\t\t1. Register Patient\n";
-        cout<<"\t\t\t\t\t\t2.Display All Patient\n";
-        cout<<"\t\t\t\t\t\t3.Exit\n";
-        cout<<"\t\t\t\t\t\tPlease Choose Option Above: ";
+        cout<<"---------------------Welcome to our Sabay Hospital------------------ "<<endl;
+        cout<<"1. Register Patient\n";
+        cout<<"2.Display All Patient\n";
+        cout<<"3.Exit\n";
+        cout<<"Please Choose Option Above: ";
         cin>>option;
 
         switch (option)
         {
             case 1:
-            cout<<"\n\t\t\t\t\t---------------------------Pateint Registration--------------------\n";
+            cout<<"---------------------------Pateint Registration--------------------\n";
             hospital.AddPatient();
             break;
 
             case 2:
-            cout<<"\t\t\t\t\t-------------------------Display All Patient Information---------------\n";
+            cout<<"-------------------------Display All Patient Information---------------\n";
             hospital.DisplayPatients();
             break;
             
             case 3:
-            cout<<"\t\t\t\t\t------------------------------Exiting Program-----------------------\n";
+            cout<<"------------------------------Exiting Program-----------------------\n";
             break;
 
             default:
-            cout<<"\t\t\t\t\t----------Please Enter Valid Option-----------\n";
+            cout<<"----------Please Enter Valid Option-----------\n";
 
         }
     }
