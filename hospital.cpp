@@ -79,8 +79,6 @@ public:
         getline(cin, newPatient->Prescription);
         cout << "Enter the Name of Your Consultant Doctor: ";
         getline(cin, newPatient->Consultant);
-
-        ''
        
 
     
@@ -141,7 +139,7 @@ public:
 
 
     //opearting the patient by remove first element in queue
-    void Dequeue()
+    //void Dequeue()
     // Check for duplicate patient ID
     bool CheckDuplicateID(int id) {
         Patient *current = front;
