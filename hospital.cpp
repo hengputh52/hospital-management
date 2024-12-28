@@ -1,6 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <vector>
+#include <string>
+#include <stdlib.h>
 using namespace std;
 
 // Define the Patient structure
@@ -45,6 +48,7 @@ public:
 
     // Add a new patient
     void AddPatient() {
+        system("cls");
         Patient *newPatient = new Patient;
         newPatient->Next = nullptr;
 
@@ -89,8 +93,187 @@ public:
         cout << "Patient added successfully!\n";
     }
 
+
+    //search function
+
+    void SearchPatient()
+    {
+        system("cls");
+        cout<<"Enter the ID of the patient to search: ";
+        int id;
+        cin>>id;
+
+        Patient *foundPatient = FindPatientByID(id);
+        if (foundPatient) {
+            cout << "Patient Found:\n";
+            DisplayPatientDetails(foundPatient);
+        } else {
+            cout << "No patient found with ID " << id << ".\n";
+        }
+
+
+    }
+
+
+    void UpdatePatient()
+    {
+        system("cls");
+        int id;
+        cout << "Enter the ID of the patient to update: ";
+        cin >> id;
+
+        Patient *foundPatient = FindPatientByID(id);
+        if (foundPatient) {
+            cout << "Patient Found:\n";
+            DisplayPatientDetails(foundPatient);
+
+            // Allow the user to update details
+            cin.ignore(); // Clear the newline buffer
+            foundPatient->Name = InputString("Enter Updated Full Name (or press Enter to keep the current): ");
+            foundPatient->Age = InputInt("Enter Updated Age (or press -1 to keep the current): ");
+            foundPatient->Gender = InputChar("Enter Updated Gender (M/F) (or press Enter to keep the current): ");
+            foundPatient->Telephone = InputString("Enter Updated Telephone (or press Enter to keep the current): ");
+            foundPatient->Date = InputString("Enter Updated Date (YYYY-MM-DD) (or press Enter to keep the current): ");
+            foundPatient->Symptoms = InputString("Enter Updated Symptoms (or press Enter to keep the current): ");
+            foundPatient->Time_Treatment = InputInt("Enter Updated Time for Treatment (or press -1 to keep the current): ");
+            foundPatient->Accompany = InputString("Enter Updated Name of Accompanying Person (or press Enter to keep the current): ");
+            foundPatient->Prescription = InputString("Enter Updated Prescription (or press Enter to keep the current): ");
+            foundPatient->Consultant = InputString("Enter Updated Consultant Doctor (or press Enter to keep the current): ");
+
+            SaveToFile(); // Save changes to file
+            cout << "Patient information updated successfully.\n";
+        } else {
+            cout << "No patient found with ID " << id << ".\n";
+        }
+    }
+    
+
+    void DeletePatient()
+    {
+        system("cls");
+        int id;
+        cout << "Enter the ID of the patient to delete: ";
+        cin >> id;
+
+        if (DeletePatientFromStack(Red_Top, id) ||
+            DeletePatientFromStack(Yellow_Top, id) ||
+            DeletePatientFromStack(Green_Top, id)) {
+            SaveToFile(); // Save changes to file
+            cout << "Patient with ID " << id << " deleted successfully.\n";
+        } else {
+            cout << "No patient found with ID " << id << ".\n";
+        }
+    }
+
+    bool DeletePatientFromStack(Patient *&top, int id) {
+    Patient *current = top, *previous = nullptr;
+
+    while (current) {
+        if (current->ID == id) {
+            if (previous) {
+                previous->Next = current->Next;
+            } else {
+                top = current->Next; // Update top if deleting the first node
+            }
+
+            delete current; // Free memory
+            return true;
+        }
+        previous = current;
+        current = current->Next;
+    }
+    return false;
+}
+
+
+Patient *FindPatientByID(int id) {
+    Patient *patient = nullptr;
+    if ((patient = FindInStack(Red_Top, id))) return patient;
+    if ((patient = FindInStack(Yellow_Top, id))) return patient;
+    if ((patient = FindInStack(Green_Top, id))) return patient;
+    return nullptr;
+}
+
+
+
+    void GenerateReportFromHistory() {
+        system("cls");
+        ifstream file("patientsHistory.csv");
+        if (!file.is_open()) {
+            cout << "Error: Unable to open the history file.\n";
+            return;
+        }
+
+        int totalPatients = 0;
+        int redCount = 0, yellowCount = 0, greenCount = 0;
+        int maleCount = 0, femaleCount = 0;
+        int minorsCount = 0, adultsCount = 0, seniorsCount = 0;
+
+        string line;
+        while (getline(file, line)) {
+            stringstream ss(line);
+            string name, telephone, date, symptoms, accompany, prescription, consultant;
+            int id, age, sicknessLevel, timeTreatment;
+            char gender;
+
+            // Parse the CSV line
+            getline(ss, name, ',');
+            ss >> id;
+            ss.ignore();
+            ss >> age;
+            ss.ignore();
+            ss >> gender;
+            ss.ignore();
+            getline(ss, telephone, ',');
+            getline(ss, date, ',');
+            getline(ss, symptoms, ',');
+            ss >> sicknessLevel;
+            ss.ignore();
+            ss >> timeTreatment;
+            ss.ignore();
+            getline(ss, accompany, ',');
+            getline(ss, prescription, ',');
+            getline(ss, consultant, ',');
+
+            // Increment total patients
+            totalPatients++;
+
+            // Count sickness levels
+            if (sicknessLevel == 1) redCount++;
+            else if (sicknessLevel == 2) yellowCount++;
+            else if (sicknessLevel == 3) greenCount++;
+
+            // Count gender
+            if (toupper(gender) == 'M') maleCount++;
+            else if (toupper(gender) == 'F') femaleCount++;
+
+            // Count age distribution
+            if (age <= 17) minorsCount++;
+            else if (age <= 59) adultsCount++;
+            else seniorsCount++;
+        }
+
+        file.close();
+
+        // Display the report
+        cout << "\n--------------------- History Report ---------------------\n";
+        cout << "Total Patients in History: " << totalPatients << "\n";
+        cout << "Red Priority Patients: " << redCount << "\n";
+        cout << "Yellow Priority Patients: " << yellowCount << "\n";
+        cout << "Green Priority Patients: " << greenCount << "\n";
+        cout << "Male Patients: " << maleCount << "\n";
+        cout << "Female Patients: " << femaleCount << "\n";
+        cout << "\nAge Distribution:\n";
+        cout << " - Minors (0-17): " << minorsCount << "\n";
+        cout << " - Adults (18-59): " << adultsCount << "\n";
+        cout << " - Seniors (60+): " << seniorsCount << "\n";
+        cout << "----------------------------------------------------------\n";
+}
+
+    
     // Display and process one patient at a time, prioritizing Red > Yellow > Green
     void ProcessPatient() {
+        system("cls");
         cout << "----------------- Processing Patient ------------------\n";
 
         if (Pop(Red_Top)) return;    // Process from Red queue (top priority)
@@ -102,19 +285,23 @@ public:
 
     // Display patients
     void DisplayRed() {
+        system("cls");
         cout << "\nDisplaying Red Patients (Top to Bottom):\n";
         DisplayStack(Red_Top);
     }
     void DisplayYellow(){
+        system("cls");
         cout << "\nDisplaying Yellow Patients (Top to Bottom):\n";
         DisplayStack(Yellow_Top);
     }
     void DisplayGreen() {
+        system("cls");
         cout << "\nDisplaying Green Patients (Top to Bottom):\n";
         DisplayStack(Green_Top);
     }
 
     void DisplayPatients() {
+        system("cls");
         DisplayRed();
         DisplayYellow();
         DisplayGreen();
@@ -241,15 +428,15 @@ private:
     }
 
     // Find a patient in a stack
-    bool FindInStack(Patient *top, int id) {
+    Patient* FindInStack(Patient *top, int id) {
         Patient *current = top;
         while (current) {
             if (current->ID == id) {
-                return true;
+                return current;
             }
             current = current->Next;
         }
-        return false;
+        return nullptr;
     }
 
     // Save stacks to a CSV file
@@ -333,6 +520,7 @@ private:
 
 // Main function
 int main() {
+    system("cls");
     PatientList hospital;
     int choice;
     int option;
@@ -342,10 +530,11 @@ int main() {
         cout << "2. Display\n";
         cout << "3. Process One Patient\n";
         cout << "4. Display All Operated Patients History\n";
-        cout << "5. Edit by ID\n";
-        cout << "6. Search by ID\n";
-        cout << "7. Delete By ID\n";
-        cout << "8. Exit\n";
+        cout << "5. Update Patient Information\n";
+        cout << "6. Search Patient Information\n";
+        cout << "7. Delete Patient Information\n";
+        cout<<  "8. Generate Report\n";
+        cout << "9. Exit\n";
         cout << "Choose an option: ";
         cin >> option;
 
@@ -386,7 +575,16 @@ int main() {
                 hospital.DisplayOperatedPatientsHistory();
                 break;
             case 5:
-                cout << "Exiting program...\n";
+                hospital.UpdatePatient();
+                break;
+            case 6:
+                hospital.SearchPatient();
+                break;
+            case 7:
+                hospital.DeletePatient();
+                break;
+            case 8:
+                hospital.GenerateReportFromHistory();    
                 break;
             default:
                 cout << "Invalid option. Try again.\n";
