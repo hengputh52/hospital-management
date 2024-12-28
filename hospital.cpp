@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 using namespace std;
 
 // Define the Patient structure
@@ -21,24 +23,28 @@ struct Patient {
 // Define the PatientList class
 class PatientList {
 private:
-    int Red_Size, Yellow_Size, Green_Size;
-    Patient *Red_Front, *Red_Rear;
-    Patient *Yellow_Front, *Yellow_Rear;
-    Patient *Green_Front, *Green_Rear;
+    Patient *Red_Top;
+    Patient *Yellow_Top;
+    Patient *Green_Top;
+    const string fileName = "patients.csv"; // CSV file name
 
 public:
     // Constructor
     PatientList() {
-        Red_Size = Yellow_Size = Green_Size = 0;
-        Red_Front = Red_Rear = NULL;
-        Yellow_Front = Yellow_Rear =NULL;
-        Green_Front = Green_Rear = NULL;
-        
+        Red_Top = nullptr;
+        Yellow_Top = nullptr;
+        Green_Top = nullptr;
+
+        // Load patients from the file
+        LoadFromFile();
     }
 
-    // Add a new patient (enqueue)
+    ~PatientList() {
+        SaveToFile(); // Save patients to file upon destruction
+    }
+
+    // Add a new patient
     void AddPatient() {
-        // Create a new patient node
         Patient *newPatient = new Patient;
         newPatient->Next = nullptr;
 
@@ -66,44 +72,104 @@ public:
         cout << "Enter Today's Date (YYYY-MM-DD): ";
         cin >> newPatient->Date;
         cout << "Enter Your Symptoms: ";
-        cin.ignore(); // Clear buffer
+        cin.ignore();
         getline(cin, newPatient->Symptoms);
         cout << "Enter Your Sickness Level (1: Red, 2: Yellow, 3: Green): ";
         cin >> newPatient->Sickness_Level;
         cout << "Enter Your Time for Treatment (in minutes): ";
         cin >> newPatient->Time_Treatment;
         cout << "Enter the Name of Accompanying Person (if any): ";
-        cin.ignore(); // Clear buffer
+        cin.ignore();
         getline(cin, newPatient->Accompany);
         cout << "Enter Your Prescription: ";
         getline(cin, newPatient->Prescription);
         cout << "Enter the Name of Your Consultant Doctor: ";
         getline(cin, newPatient->Consultant);
-       
 
-    
+        // Push the patient to the appropriate stack (queue as stack)
+        if (newPatient->Sickness_Level == 1) {
+            Push(Red_Top, newPatient);
+        } else if (newPatient->Sickness_Level == 2) {
+            Push(Yellow_Top, newPatient);
+        } else if (newPatient->Sickness_Level == 3) {
+            Push(Green_Top, newPatient);
+        } else {
+            cout << "Invalid Sickness Level. Patient not added.\n";
+            delete newPatient;
+            return;
+        }
+
+        SaveToFile(); // Save patients to the file
         cout << "Patient added successfully!\n";
     }
 
+    // Display and process one patient at a time, prioritizing Red > Yellow > Green
+    void ProcessPatient() {
+        cout << "----------------- Processing Patient ------------------\n";
 
-    void PatientOperation()
-    {
-        //red has to display first then yellow and green 
+        if (Pop(Red_Top)) return;    // Process from Red queue (top priority)
+        if (Pop(Yellow_Top)) return; // Process from Yellow queue
+        if (Pop(Green_Top)) return;  // Process from Green queue
 
-
-        cout<<"-----------------Patient Operation------------------\n";
-
+        cout << "No patients left to process.\n";
     }
 
     // Display all patients
     void DisplayPatients() {
-        if (Empty()) {
-            cout << "There are no patients.\n";
+        cout << "\nDisplaying Red Patients (Top to Bottom):\n";
+        DisplayStack(Red_Top);
+
+        cout << "\nDisplaying Yellow Patients (Top to Bottom):\n";
+        DisplayStack(Yellow_Top);
+
+        cout << "\nDisplaying Green Patients (Top to Bottom):\n";
+        DisplayStack(Green_Top);
+    }
+
+private:
+    // Push a patient onto the stack (queue as stack)
+    void Push(Patient *&top, Patient *newPatient) {
+        newPatient->Next = top;
+        top = newPatient;
+    }
+
+    // Pop a patient from the stack (queue as stack)
+    bool Pop(Patient *&top) {
+        if (!top) return false;
+
+        Patient *temp = top;
+        top = top->Next;
+
+        // Display the patient details
+        cout << "Processing Patient:\n";
+        cout << "----------------------\n";
+        cout << "Name: " << temp->Name << "\n";
+        cout << "ID: " << temp->ID << "\n";
+        cout << "Age: " << temp->Age << "\n";
+        cout << "Gender: " << temp->Gender << "\n";
+        cout << "Telephone: " << temp->Telephone << "\n";
+        cout << "Date: " << temp->Date << "\n";
+        cout << "Symptoms: " << temp->Symptoms << "\n";
+        cout << "Sickness Level: " << temp->Sickness_Level << "\n";
+        cout << "Time for Treatment: " << temp->Time_Treatment << "\n";
+        cout << "Accompany: " << temp->Accompany << "\n";
+        cout << "Prescription: " << temp->Prescription << "\n";
+        cout << "Consultant: " << temp->Consultant << "\n";
+        cout << "----------------------\n";
+
+        delete temp; // Free the memory
+        return true;
+    }
+
+    // Display the patients in a stack (queue as stack)
+    void DisplayStack(Patient *top) {
+        if (!top) {
+            cout << "No patients in this category.\n";
             return;
         }
 
-        Patient *current = front;
-        while (current != nullptr) {
+        Patient *current = top;
+        while (current) {
             cout << "----------------------\n";
             cout << "Name: " << current->Name << "\n";
             cout << "ID: " << current->ID << "\n";
@@ -117,33 +183,19 @@ public:
             cout << "Accompany: " << current->Accompany << "\n";
             cout << "Prescription: " << current->Prescription << "\n";
             cout << "Consultant: " << current->Consultant << "\n";
-            cout << "----------------------\n";
             current = current->Next;
         }
     }
 
-    //add patient in queue
-    void Enqueue(Patient *&front, Patient *&rear, Patient *newPatient)
-    {
-        if(IsEmpty(front))
-        {
-            front = rear = newPatient;
-        }
-        else
-        {
-            rear->Next = newPatient;
-            rear = newPatient;
-        }
-
-    }
-
-
-    //opearting the patient by remove first element in queue
-    //void Dequeue()
     // Check for duplicate patient ID
     bool CheckDuplicateID(int id) {
-        Patient *current = front;
-        while (current != nullptr) {
+        return (FindInStack(Red_Top, id) || FindInStack(Yellow_Top, id) || FindInStack(Green_Top, id));
+    }
+
+    // Find a patient in a stack
+    bool FindInStack(Patient *top, int id) {
+        Patient *current = top;
+        while (current) {
             if (current->ID == id) {
                 return true;
             }
@@ -152,11 +204,74 @@ public:
         return false;
     }
 
-    // Check if the patient list is empty
-   bool IsEmpty(Patient *front)
-   {
-        return front= NULL;
-   }
+    // Save stacks to a CSV file
+    void SaveToFile() {
+        ofstream file(fileName);
+        if (!file.is_open()) {
+            cout << "Error: Unable to open file for saving.\n";
+            return;
+        }
+
+        SaveStackToFile(file, Red_Top);
+        SaveStackToFile(file, Yellow_Top);
+        SaveStackToFile(file, Green_Top);
+
+        file.close();
+    }
+
+    void SaveStackToFile(ofstream &file, Patient *top) {
+        Patient *current = top;
+        while (current) {
+            file << current->Name << "," << current->ID << "," << current->Age << "," << current->Gender << ","
+                 << current->Telephone << "," << current->Date << "," << current->Symptoms << ","
+                 << current->Sickness_Level << "," << current->Time_Treatment << "," << current->Accompany << ","
+                 << current->Prescription << "," << current->Consultant << "\n";
+            current = current->Next;
+        }
+    }
+
+    // Load patients from the file
+    void LoadFromFile() {
+        ifstream file(fileName);
+        if (!file.is_open()) {
+            cout << "No previous patient data found.\n";
+            return;
+        }
+
+        string line, value;
+        while (getline(file, line)) {
+            stringstream ss(line);
+
+            Patient *newPatient = new Patient;
+            getline(ss, newPatient->Name, ',');
+            getline(ss, value, ',');
+            newPatient->ID = stoi(value);
+            getline(ss, value, ',');
+            newPatient->Age = stoi(value);
+            getline(ss, value, ',');
+            newPatient->Gender = value[0];
+            getline(ss, newPatient->Telephone, ',');
+            getline(ss, newPatient->Date, ',');
+            getline(ss, newPatient->Symptoms, ',');
+            getline(ss, value, ',');
+            newPatient->Sickness_Level = stoi(value);
+            getline(ss, value, ',');
+            newPatient->Time_Treatment = stoi(value);
+            getline(ss, newPatient->Accompany, ',');
+            getline(ss, newPatient->Prescription, ',');
+            getline(ss, newPatient->Consultant, ',');
+
+            if (newPatient->Sickness_Level == 1) {
+                Push(Red_Top, newPatient);
+            } else if (newPatient->Sickness_Level == 2) {
+                Push(Yellow_Top, newPatient);
+            } else if (newPatient->Sickness_Level == 3) {
+                Push(Green_Top, newPatient);
+            }
+        }
+
+        file.close();
+    }
 };
 
 // Main function
@@ -164,37 +279,32 @@ int main() {
     PatientList hospital;
 
     int option;
-    do{
-        cout<<"---------------------Welcome to our Sabay Hospital------------------ "<<endl;
-        cout<<"1. Register Patient\n";
-        cout<<"2.Display All Patient\n";
-        cout<<"3.Exit\n";
-        cout<<"Please Choose Option Above: ";
-        cin>>option;
+    do {
+        cout << "\n--------------------- Sabay Hospital ------------------\n";
+        cout << "1. Register Patient\n";
+        cout << "2. Display All Patients\n";
+        cout << "3. Process One Patient\n";
+        cout << "4. Exit\n";
+        cout << "Choose an option: ";
+        cin >> option;
 
-        switch (option)
-        {
+        switch (option) {
             case 1:
-            cout<<"---------------------------Pateint Registration--------------------\n";
-            hospital.AddPatient();
-            break;
-
+                hospital.AddPatient();
+                break;
             case 2:
-            cout<<"-------------------------Display All Patient Information---------------\n";
-            hospital.DisplayPatients();
-            break;
-            
+                hospital.DisplayPatients();
+                break;
             case 3:
-            cout<<"------------------------------Exiting Program-----------------------\n";
-            break;
-
+                hospital.ProcessPatient();
+                break;
+            case 4:
+                cout << "Exiting program...\n";
+                break;
             default:
-            cout<<"----------Please Enter Valid Option-----------\n";
-
+                cout << "Invalid option. Try again.\n";
         }
-    }
-    while(option!=3);
-
+    } while (option != 4);
 
     return 0;
 }
