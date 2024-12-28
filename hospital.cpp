@@ -100,18 +100,28 @@ public:
         cout << "No patients left to process.\n";
     }
 
-    // Display all patients
-    void DisplayPatients() {
+    // Display patients
+    void DisplayRed() {
         cout << "\nDisplaying Red Patients (Top to Bottom):\n";
         DisplayStack(Red_Top);
-
+    }
+    void DisplayYellow(){
         cout << "\nDisplaying Yellow Patients (Top to Bottom):\n";
         DisplayStack(Yellow_Top);
-
+    }
+    void DisplayGreen() {
         cout << "\nDisplaying Green Patients (Top to Bottom):\n";
         DisplayStack(Green_Top);
     }
-// Display operated patients history
+
+    void DisplayPatients() {
+        DisplayRed();
+        DisplayYellow();
+        DisplayGreen();
+    }
+
+
+    // Display operated patients history
     void DisplayOperatedPatientsHistory() {
         ifstream file(fileHistory);
         if (!file.is_open()) {
@@ -227,7 +237,7 @@ private:
 
     // Check for duplicate patient ID
     bool CheckDuplicateID(int id) {
-        return (FindInStack(Red_Top, id)  FindInStack(Yellow_Top, id)  FindInStack(Green_Top, id));
+        return (FindInStack(Red_Top, id) || FindInStack(Yellow_Top, id) || FindInStack(Green_Top, id));
     }
 
     // Find a patient in a stack
@@ -241,6 +251,7 @@ private:
         }
         return false;
     }
+
     // Save stacks to a CSV file
     void SaveToFile() {
         ofstream file(fileName);
@@ -323,15 +334,18 @@ private:
 // Main function
 int main() {
     PatientList hospital;
-
+    int choice;
     int option;
     do {
         cout << "\n--------------------- Sabay Hospital ------------------\n";
         cout << "1. Register Patient\n";
-        cout << "2. Display All Patients\n";
+        cout << "2. Display\n";
         cout << "3. Process One Patient\n";
         cout << "4. Display All Operated Patients History\n";
-        cout << "5. Exit\n";
+        cout << "5. Edit by ID\n";
+        cout << "6. Search by ID\n";
+        cout << "7. Delete By ID\n";
+        cout << "8. Exit\n";
         cout << "Choose an option: ";
         cin >> option;
 
@@ -340,7 +354,30 @@ int main() {
                 hospital.AddPatient();
                 break;
             case 2:
-                hospital.DisplayPatients();
+                cout <<"1. Display all Red\n";
+                cout <<"2. Display all Yellow\n";
+                cout <<"3. Display all Green\n";
+                cout <<"4. Display all\n";
+                cout << "Choose an option: ";
+                cin >> choice;
+
+                switch (choice)
+                {
+                case 1:
+                    hospital.DisplayRed();
+                    break;
+                case 2:
+                    hospital.DisplayYellow();
+                    break;
+                case 3:
+                    hospital.DisplayGreen();
+                    break;
+                case 4:
+                    hospital.DisplayPatients();
+                    break;
+                default:
+                    break;
+                }
                 break;
             case 3:
                 hospital.ProcessPatient();
@@ -358,4 +395,3 @@ int main() {
 
     return 0;
 }
-`
